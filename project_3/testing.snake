@@ -1,0 +1,19 @@
+NAMES = ["CTLrep1","CTLrep2","CTLrep3","KOrep1","KOrep2","KOrep3"]
+
+rule all:
+	input:
+		"results/multiqc_report_align.html"
+
+rule multiqc:
+	input:
+		expand('results/{name}_flagstats.txt', name=NAMES)
+	output:
+		"results/multiqc_report_align.html"
+	params:
+		'results'
+	conda:
+		'envs/multiqc_env.yml'
+	shell:
+		"""
+		multiqc -f {outdir} -o {outdir}
+		"""
