@@ -1,0 +1,42 @@
+fa_fn = ‘ncbi_dataset/data/GCF_000001635.27/chr19.fa'
+gtf_fn = ‘ncbi_dataset/data/GCF_000001635.27/genomic.gtf'
+star_index = ‘Chr19_STAR_index’
+FILES = [‘A’, ‘B’, ‘C’]
+
+rule all:
+	input:
+		expand(‘{sample}.Aligned.out.bam’, sample=FILES)
+
+rule dl_genome:
+	output:
+		fa = fa_fn,
+		gtf = gtf_fn
+	shell:
+		‘’’
+		datasets download genome accession GCF_000001635.27 –include gtf, genome –chromosomes 19 unzip ncbi_dataset.zip
+		‘’’
+
+rule STAR_index:
+	input:
+		fa = fa_fn,
+		gtf = gtf_fn,
+	output:
+		index=directory(star_index)
+	threads: 4
+	shell:
+		‘’’
+		STAR –runMode genome generate –genomeDir {output.index} –genomeFastaFiles {input.fa} –sjdbGTFfile {input.gtf}
+		‘’’
+		
+rule star:
+	input:
+		fq=’{sample}.fq’,
+		index=’Chr19_STAR_index’
+	output:
+		‘{sample}.Aligned.out.bam’
+	params:
+		prefix = ‘{sample}.’
+	shell:
+		‘’’
+		STAR –genomeDir {input.index} –readFilesIn {input.fq} –outSAMtype BAM Unsorted –outFileNamePrefix {params.prefix}
+    	‘’’
